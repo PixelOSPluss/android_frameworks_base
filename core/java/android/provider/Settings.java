@@ -5369,6 +5369,18 @@ public final class Settings {
         public static final String PEAK_REFRESH_RATE = "peak_refresh_rate";
 
         /**
+         * Per-app refresh rate config
+         * @hide
+         */
+        public static final String REFRESH_RATE_CONFIG_CUSTOM = "refresh_rate_config_custom";
+
+        /**
+         * Force highest refresh rate in all apps
+         * @hide
+         */
+        public static final String EXTREME_REFRESH_RATE = "extreme_refresh_rate";
+
+        /**
          * Control lock behavior on fold
          *
          * If this isn't set, the system falls back to a device specific default.
