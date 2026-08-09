@@ -20753,6 +20753,12 @@ public final class Settings {
         public static final String MINMODE_ACTIVE = "minmode_active";
 
         /**
+         * Whether refresh rate should be switched to 60Hz on power save mode.
+         * @hide
+         */
+        public static final String LOW_POWER_REFRESH_RATE = "low_power_rr_switch";
+
+        /**
           * Indicates if watch ranging is available for the device.
          *
          * @hide

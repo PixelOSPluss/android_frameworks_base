@@ -37,6 +37,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.display.BrightnessInfo;
 import android.hardware.display.DisplayManager;
+import org.derpfest.display.IRefreshRateListener;
+import org.derpfest.display.RefreshRateManager;
 import android.hardware.display.DisplayManagerInternal;
 import android.hardware.display.DisplayManagerInternal.RefreshRateLimitation;
 import android.hardware.fingerprint.IUdfpsRefreshRateRequestCallback;
@@ -138,6 +140,7 @@ public class DisplayModeDirector {
     private final HbmObserver mHbmObserver;
     private final SkinThermalStatusObserver mSkinThermalStatusObserver;
     private final ModeChangeObserver mModeChangeObserver;
+    private final RefreshRateObserver mRefreshRateObserver;
 
     private final SystemRequestObserver mSystemRequestObserver;
     private final DeviceConfigParameterProvider mConfigParameterProvider;
@@ -226,6 +229,7 @@ public class DisplayModeDirector {
         mSensorObserver = new ProximitySensorObserver(mVotesStorage, injector);
         mSkinThermalStatusObserver = new SkinThermalStatusObserver(injector, mVotesStorage);
         mModeChangeObserver = mInjector.getModeChangeObserver(mVotesStorage, handler.getLooper());
+        mRefreshRateObserver = new RefreshRateObserver(injector, mVotesStorage);
         mHbmObserver = new HbmObserver(injector, mVotesStorage, BackgroundThread.getHandler(),
                 mDeviceConfigDisplaySettings);
         mSystemRequestObserver = mInjector.getSystemRequestObserver(mVotesStorage);
@@ -267,6 +271,7 @@ public class DisplayModeDirector {
         // UDFPS observer registers a listener with SystemUI which might not be ready until the
         // system is fully booted.
         mUdfpsObserver.observe();
+        mRefreshRateObserver.observe();
     }
 
     /**
@@ -3165,12 +3170,51 @@ public class DisplayModeDirector {
         SystemRequestObserver getSystemRequestObserver(VotesStorage votesStorage);
 
         ModeChangeObserver getModeChangeObserver(VotesStorage votesStorage, Looper looper);
+
+        void registerRefreshRateListener(IRefreshRateListener.Stub listener);
+    }
+
+    private final class RefreshRateObserver extends IRefreshRateListener.Stub {
+        private final Injector mInjector;
+        private final VotesStorage mVotesStorage;
+
+        RefreshRateObserver(Injector injector, VotesStorage votesStorage) {
+            mInjector = injector;
+            mVotesStorage = votesStorage;
+        }
+
+        @Override
+        public void onRequestedRefreshRate(int refreshRate) {
+            final Vote vote;
+            if (refreshRate > 0) {
+                vote = Vote.forRenderFrameRates((float) refreshRate, (float) refreshRate);
+            } else {
+                vote = null;
+            }
+            mVotesStorage.updateGlobalVote(Vote.PRIORITY_USER_PREFERRED, vote);
+        }
+
+        @Override
+        public void onRequestedMemcRefreshRate(int refreshRate) {
+            final Vote vote;
+            if (refreshRate > 0) {
+                vote = Vote.forRenderFrameRates((float) refreshRate, (float) refreshRate);
+            } else {
+                vote = null;
+            }
+            mVotesStorage.updateGlobalVote(Vote.PRIORITY_MEMC, vote);
+        }
+
+        public void observe() {
+            mInjector.registerRefreshRateListener(this);
+        }
     }
 
     @VisibleForTesting
     static class RealInjector implements Injector {
         private final Context mContext;
         private DisplayManager mDisplayManager;
+        private RefreshRateManager mRefreshRateManager;
 
         RealInjector(Context context) {
             mContext = context;
@@ -3329,11 +3373,28 @@ public class DisplayModeDirector {
             return new ModeChangeObserver(votesStorage, this, looper);
         }
 
+        @Override
+        public void registerRefreshRateListener(IRefreshRateListener.Stub listener) {
+            final RefreshRateManager manager = getRefreshRateManager();
+            if (manager == null) {
+                Slog.e(TAG, "Could not register refresh rate listener. RefreshRateManager is not available");
+                return;
+            }
+            manager.registerRefreshRateListener(listener);
+        }
+
         private DisplayManager getDisplayManager() {
             if (mDisplayManager == null) {
                 mDisplayManager = mContext.getSystemService(DisplayManager.class);
             }
             return mDisplayManager;
+        }
+
+        private RefreshRateManager getRefreshRateManager() {
+            if (mRefreshRateManager == null) {
+                mRefreshRateManager = mContext.getSystemService(RefreshRateManager.class);
+            }
+            return mRefreshRateManager;
         }
 
         private IThermalService getThermalService() {
