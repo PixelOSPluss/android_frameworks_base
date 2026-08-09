@@ -266,6 +266,13 @@ public class Utils {
         private static final int SLEEP_NOTIFICATION_ID = 727;
         public static final String SLEEP_MODE_TURN_OFF = "android.intent.action.SLEEP_MODE_TURN_OFF";
 
+        public static final String SLEEP_MODE_ENABLED = "sleep_mode_enabled";
+        public static final String SLEEP_MODE_WIFI_TOGGLE = "sleep_mode_wifi_toggle";
+        public static final String SLEEP_MODE_BLUETOOTH_TOGGLE = "sleep_mode_bluetooth_toggle";
+        public static final String SLEEP_MODE_CELLULAR_TOGGLE = "sleep_mode_cellular_toggle";
+        public static final String SLEEP_MODE_SENSORS_TOGGLE = "sleep_mode_sensors_toggle";
+        public static final String SLEEP_MODE_RINGER_MODE = "sleep_mode_ringer_mode";
+
         public SleepModeController(Context context) {
             mContext = context;
             mUiContext = ActivityThread.currentActivityThread().getSystemUiContext();
@@ -278,7 +285,7 @@ public class Utils {
             mResources = mContext.getResources();
 
             mSleepModeEnabled = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
 
             SettingsObserver observer = new SettingsObserver(new Handler(Looper.getMainLooper()));
             observer.observe();
@@ -413,35 +420,35 @@ public class Utils {
             if (!ActivityManager.isSystemReady()) return;
 
             final boolean disableWifi = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_WIFI_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_WIFI_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableWifi) {
                 mWifiState = isWifiEnabled();
                 setWifiEnabled(false);
             }
 
             final boolean disableBluetooth = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_BLUETOOTH_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_BLUETOOTH_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableBluetooth) {
                 mBluetoothState = isBluetoothEnabled();
                 setBluetoothEnabled(false);
             }
 
             final boolean disableData = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_CELLULAR_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_CELLULAR_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableData) {
                 mCellularState = getTelephonyManager().isDataEnabled();
                 getTelephonyManager().setDataEnabled(false);
             }
 
             final boolean disableSensors = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_SENSORS_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_SENSORS_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableSensors) {
                 mSensorState = isSensorEnabled();
                 setSensorEnabled(false);
             }
 
             final int ringerMode = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_RINGER_MODE, 0, UserHandle.USER_CURRENT);
+                    SLEEP_MODE_RINGER_MODE, 0, UserHandle.USER_CURRENT);
             if (ringerMode != 0) {
                 mRingerState = getRingerModeInternal();
                 mZenState = getZenMode();
@@ -465,31 +472,31 @@ public class Utils {
             if (!ActivityManager.isSystemReady()) return;
 
             final boolean disableWifi = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_WIFI_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_WIFI_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableWifi && mWifiState != isWifiEnabled()) {
                 setWifiEnabled(mWifiState);
             }
 
             final boolean disableBluetooth = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_BLUETOOTH_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_BLUETOOTH_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableBluetooth && mBluetoothState != isBluetoothEnabled()) {
                 setBluetoothEnabled(mBluetoothState);
             }
 
             final boolean disableData = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_CELLULAR_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_CELLULAR_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableData && mCellularState != getTelephonyManager().isDataEnabled()) {
                 getTelephonyManager().setDataEnabled(mCellularState);
             }
 
             final boolean disableSensors = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_SENSORS_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
+                    SLEEP_MODE_SENSORS_TOGGLE, 1, UserHandle.USER_CURRENT) == 1;
             if (disableSensors && mSensorState != isSensorEnabled()) {
                 setSensorEnabled(mSensorState);
             }
 
             final int ringerMode = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.SLEEP_MODE_RINGER_MODE, 0, UserHandle.USER_CURRENT);
+                    SLEEP_MODE_RINGER_MODE, 0, UserHandle.USER_CURRENT);
             if (ringerMode != 0 && (mRingerState != getRingerModeInternal() ||
                     mZenState != getZenMode())) {
                 setRingerModeInternal(mRingerState);
@@ -556,7 +563,7 @@ public class Utils {
             void observe() {
                 ContentResolver resolver = mContext.getContentResolver();
                 resolver.registerContentObserver(Settings.Secure.getUriFor(
-                        Settings.Secure.SLEEP_MODE_ENABLED), false, this,
+                        SLEEP_MODE_ENABLED), false, this,
                         UserHandle.USER_ALL);
             }
 
@@ -567,7 +574,7 @@ public class Utils {
 
             void update() {
                 final boolean enabled = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                        Settings.Secure.SLEEP_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+                        SLEEP_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
                 setSleepMode(enabled);
             }
         }
