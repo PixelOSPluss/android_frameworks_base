@@ -860,6 +860,7 @@
 
     <!-- Added in 26Q2 -->
     <protected-broadcast android:name="android.telephony.action.STK_SETUP_EVENT_LIST" />
+    <protected-broadcast android:name="android.intent.action.SLEEP_MODE_TURN_OFF" />
 
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->

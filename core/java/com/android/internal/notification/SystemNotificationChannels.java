@@ -71,6 +71,7 @@ public class SystemNotificationChannels {
     public static final String ACCESSIBILITY_HEARING_DEVICE = "ACCESSIBILITY_HEARING_DEVICE";
     public static final String ACCESSIBILITY_SECURITY_POLICY = "ACCESSIBILITY_SECURITY_POLICY";
     public static final String ABUSIVE_BACKGROUND_APPS = "ABUSIVE_BACKGROUND_APPS";
+    public static final String SLEEP = "SLEEP";
 
     @VisibleForTesting
     static final String OBSOLETE_DO_NOT_DISTURB = "DO_NOT_DISTURB";
@@ -146,6 +147,12 @@ public class SystemNotificationChannels {
                 context.getString(R.string.notification_channel_vpn),
                 NotificationManager.IMPORTANCE_LOW);
         channelsList.add(vpn);
+
+        final NotificationChannel sleep = new NotificationChannel(
+                SLEEP,
+                context.getString(R.string.notification_channel_sleep),
+                NotificationManager.IMPORTANCE_LOW);
+        channelsList.add(sleep);
 
         final NotificationChannel time = new NotificationChannel(
                 TIME,

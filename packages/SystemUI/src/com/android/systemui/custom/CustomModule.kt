@@ -28,6 +28,9 @@ import com.android.systemui.qs.tiles.DataSwitchTile
 import com.android.systemui.qs.tiles.HeadsUpTile
 import com.android.systemui.qs.tiles.PowerShareTile
 import com.android.systemui.qs.tiles.ReadingModeTile
+import com.android.systemui.qs.tiles.ScreenshotTile
+import com.android.systemui.qs.tiles.SleepModeTile
+import com.android.systemui.qs.tiles.SmartPixelsTile
 import com.android.systemui.qs.tiles.SyncTile
 import com.android.systemui.qs.tiles.UsbTetherTile
 import com.android.systemui.qs.tiles.VpnTile
@@ -102,6 +105,12 @@ interface CustomModule {
     @IntoMap
     @StringKey(UsbTetherTile.TILE_SPEC)
     fun bindUsbTetherTile(usbTetherTile: UsbTetherTile): QSTileImpl<*>
+
+    /** Inject SleepModeTile into tileMap in QSModule */
+    @Binds
+    @IntoMap
+    @StringKey(SleepModeTile.TILE_SPEC)
+    fun bindSleepModeTile(sleepModeTile: SleepModeTile): QSTileImpl<*>
 
     /** Inject VpnTile into tileMap in QSModule */
     @Binds
@@ -285,6 +294,20 @@ interface CustomModule {
                     ),
                 instanceId = uiEventLogger.getNewInstanceId(),
                 category = TileCategory.CONNECTIVITY,
+            )
+        @Provides
+        @IntoMap
+        @StringKey(SleepModeTile.TILE_SPEC)
+        fun provideSleepModeTileConfig(uiEventLogger: QsEventLogger): QSTileConfig =
+            QSTileConfig(
+                tileSpec = TileSpec.create(SleepModeTile.TILE_SPEC),
+                uiConfig =
+                    QSTileUIConfig.Resource(
+                        iconRes = com.android.internal.R.drawable.ic_sleep,
+                        labelRes = R.string.quick_settings_sleep_mode_label
+                    ),
+                instanceId = uiEventLogger.getNewInstanceId(),
+                category = TileCategory.UTILITIES,
             )
     }
 }

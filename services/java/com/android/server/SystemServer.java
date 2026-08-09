@@ -2407,6 +2407,14 @@ public final class SystemServer implements Dumpable {
             }
             t.traceEnd();
 
+            t.traceBegin("StartSleepModeService");
+            try {
+                mSystemServiceManager.startService(com.android.server.power.SleepModeService.class);
+            } catch (Throwable e) {
+                reportWtf("starting SleepModeService", e);
+            }
+            t.traceEnd();
+
             t.traceBegin("StartLocationTimeZoneManagerService");
             try {
                 mSystemServiceManager.startService(LocationTimeZoneManagerService.Lifecycle.class);
