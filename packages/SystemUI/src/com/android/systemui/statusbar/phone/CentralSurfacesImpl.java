@@ -2609,6 +2609,14 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
             }
 
             DejankUtils.stopDetectingBlockingIpcs(tag);
+            if (Settings.Secure.getInt(mContext.getContentResolver(),
+                    "idle_manager", 1) == 1) {
+                com.android.systemui.lunaris.LunarisIdleManager.initManager(mContext);
+                com.android.systemui.lunaris.LunarisIdleManager mgr = com.android.systemui.lunaris.LunarisIdleManager.getInstance();
+                if (mgr != null && !mgr.isRunning()) {
+                    mgr.executeManager();
+                }
+            }
         }
 
         @Override
@@ -2632,6 +2640,10 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
                 }
             });
             DejankUtils.stopDetectingBlockingIpcs(tag);
+            com.android.systemui.lunaris.LunarisIdleManager mgr = com.android.systemui.lunaris.LunarisIdleManager.getInstance();
+            if (mgr != null) {
+                mgr.haltManager();
+            }
         }
 
         /**

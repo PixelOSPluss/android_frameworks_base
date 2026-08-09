@@ -15156,6 +15156,38 @@ public final class Settings {
         public static final String SLEEP_MODE_RINGER_MODE = "sleep_mode_ringer_mode";
 
         /**
+         * Idle Manager
+         * @hide
+         */
+        public static final String IDLE_MANAGER = "idle_manager";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_APPS = "idle_manager_apps";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_TIMEOUT = "idle_manager_timeout";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_KILL_STATS = "idle_manager_kill_stats";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_RESTORE_PENDING = "idle_manager_restore_pending";
+
+        /**
+         * Whether to trigger Sleep Mode when idle
+         * @hide
+         */
+        public static final String IDLE_MANAGER_SLEEP_MODE_TRIGGER = "idle_manager_sleep_mode_trigger";
+
+        /**
          * Most frequent location update interval in milliseconds that proximity alert is allowed
          * to request.
          * @hide
