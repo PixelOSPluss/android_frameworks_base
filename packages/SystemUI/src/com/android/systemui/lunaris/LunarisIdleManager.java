@@ -32,6 +32,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.UserHandle;
+import android.media.AudioManager;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.util.Log;
