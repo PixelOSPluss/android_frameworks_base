@@ -47,6 +47,10 @@ public class SleepModeService extends SystemService {
     private static final String TAG = "SleepModeService";
     private static final int WAKELOCK_TIMEOUT_MS = 3000;
 
+    private static final String SLEEP_MODE_ENABLED = "sleep_mode_enabled";
+    private static final String SLEEP_MODE_AUTO_MODE = "sleep_mode_auto_mode";
+    private static final String SLEEP_MODE_AUTO_TIME = "sleep_mode_auto_time";
+
     /**
      * Disabled state (default)
      */
@@ -166,10 +170,10 @@ public class SleepModeService extends SystemService {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.SLEEP_MODE_AUTO_MODE),
+                    SLEEP_MODE_AUTO_MODE),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.SLEEP_MODE_AUTO_TIME),
+                    SLEEP_MODE_AUTO_TIME),
                     false, this, UserHandle.USER_ALL);
         }
 
@@ -257,7 +261,7 @@ public class SleepModeService extends SystemService {
     private void initState() {
         final int pMode = mMode;
         mMode = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                Settings.Secure.SLEEP_MODE_AUTO_MODE, MODE_DISABLED,
+                SLEEP_MODE_AUTO_MODE, MODE_DISABLED,
                 UserHandle.USER_CURRENT);
         mAlarm.cancel();
         switch (mMode) {
@@ -357,7 +361,7 @@ public class SleepModeService extends SystemService {
         Calendar since = Calendar.getInstance();
         Calendar till = Calendar.getInstance();
         String value = Settings.Secure.getStringForUser(mContext.getContentResolver(),
-                Settings.Secure.SLEEP_MODE_AUTO_TIME, UserHandle.USER_CURRENT);
+                SLEEP_MODE_AUTO_TIME, UserHandle.USER_CURRENT);
         if (value == null || value.equals("")) value = "22:00,07:00";
         String[] times = value.split(",", 0);
         String[] sinceValues = times[0].split(":", 0);
@@ -416,6 +420,6 @@ public class SleepModeService extends SystemService {
         mActive = active;
         Slog.v(TAG, "setAutoSleepModeActive: active=" + active);
         Settings.Secure.putIntForUser(mContext.getContentResolver(),
-                Settings.Secure.SLEEP_MODE_ENABLED, active ? 1 : 0, UserHandle.USER_CURRENT);
+                SLEEP_MODE_ENABLED, active ? 1 : 0, UserHandle.USER_CURRENT);
     }
 }
