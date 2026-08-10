@@ -422,6 +422,10 @@
     <!-- DataSwitch tile -->
     <uses-permission android:name="android.permission.WRITE_APN_SETTINGS" />
 
+    <!-- Permission needed for Force Stop Packages & App Idle -->
+    <uses-permission android:name="android.permission.FORCE_STOP_PACKAGES" />
+    <uses-permission android:name="android.permission.CHANGE_APP_IDLE_STATE" />
+
     <application
         android:name=".application.impl.SystemUIApplicationImpl"
         android:persistent="true"

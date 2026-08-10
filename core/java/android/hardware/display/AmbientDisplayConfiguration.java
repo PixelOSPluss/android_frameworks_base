@@ -20,7 +20,10 @@ import static android.provider.Settings.Secure.SCREEN_OFF_UNLOCK_UDFPS_ENABLED;
 
 import android.annotation.TestApi;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.biometrics.Flags;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.os.SystemProperties;
 import android.provider.Settings;
@@ -40,7 +43,8 @@ import java.util.Map;
  */
 @TestApi
 public class AmbientDisplayConfiguration {
-    private static final String TAG = "AmbientDisplayConfig";
+    private static final IntentFilter sIntentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+
     private final Context mContext;
     private final boolean mAlwaysOnByDefault;
     private final boolean mPickupGestureEnabledByDefault;
@@ -59,7 +63,8 @@ public class AmbientDisplayConfiguration {
             Settings.Secure.DOZE_WAKE_LOCK_SCREEN_GESTURE,
             Settings.Secure.DOZE_WAKE_DISPLAY_GESTURE,
             Settings.Secure.DOZE_TAP_SCREEN_GESTURE,
-            Settings.Secure.DOZE_FOR_NOTIFICATIONS
+            Settings.Secure.DOZE_FOR_NOTIFICATIONS,
+            Settings.Secure.DOZE_ON_CHARGE
     };
 
     /** Non-user configurable doze settings */
@@ -267,8 +272,38 @@ public class AmbientDisplayConfiguration {
      */
     @TestApi
     public boolean alwaysOnEnabled(int user) {
-        return boolSetting(Settings.Secure.DOZE_ALWAYS_ON, user, mAlwaysOnByDefault ? 1 : 0)
-                && alwaysOnAvailable() && !accessibilityInversionEnabled(user);
+        return alwaysOnEnabledSetting(user) || alwaysOnChargingEnabled(user);
+    }
+
+    /** @hide */
+    public boolean alwaysOnEnabledSetting(int user) {
+        final boolean alwaysOnEnabled = Settings.Secure.getIntForUser(
+                mContext.getContentResolver(), Settings.Secure.DOZE_ALWAYS_ON,
+                mAlwaysOnByDefault ? 1 : 0, user) == 1;
+        return alwaysOnEnabled && alwaysOnAvailable() && !accessibilityInversionEnabled(user);
+    }
+
+    /** @hide */
+    public boolean alwaysOnChargingEnabledSetting(int user) {
+        return Settings.Secure.getIntForUser(mContext.getContentResolver(),
+            Settings.Secure.DOZE_ON_CHARGE, 0, user) == 1;
+    }
+
+    private boolean alwaysOnChargingEnabled(int user) {
+        if (alwaysOnChargingEnabledSetting(user)) {
+            final Intent intent = mContext.registerReceiver(null, sIntentFilter, Context.RECEIVER_NOT_EXPORTED);
+            if (intent != null) {
+                int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                            status == BatteryManager.BATTERY_STATUS_FULL;
+                int plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+                boolean isPlugged = plugged == BatteryManager.BATTERY_PLUGGED_AC || 
+                            plugged == BatteryManager.BATTERY_PLUGGED_USB ||
+                            plugged == BatteryManager.BATTERY_PLUGGED_WIRELESS;
+                return isPlugged && isCharging;
+            }
+        }
+        return false;
     }
 
     /**

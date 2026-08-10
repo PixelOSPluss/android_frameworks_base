@@ -14144,6 +14144,12 @@ public final class Settings {
         }
 
         /**
+         * Whether to enable DOZE only when charging
+         * @hide
+         */
+        public static final String DOZE_ON_CHARGE = "doze_on_charge";
+
+        /**
          * Helper method for determining if a location provider is enabled.
          *
          * @param cr the content resolver to use
