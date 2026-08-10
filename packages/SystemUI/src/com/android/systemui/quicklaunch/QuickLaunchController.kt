@@ -16,26 +16,22 @@ import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
 import android.graphics.drawable.Drawable
-import android.hardware.input.InputManager
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.os.UserHandle
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.provider.Settings
-import android.util.AttributeSet
-import android.view.InputEvent
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Main
+import com.android.systemui.statusbar.phone.BiometricUnlockController
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import javax.inject.Inject
-import kotlin.math.atan2
+import javax.inject.Provider
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
@@ -46,9 +42,10 @@ class QuickLaunchController
 constructor(
     @Main private val context: Context,
     private val keyguardStateController: KeyguardStateController,
+    private val biometricUnlockControllerProvider: Provider<BiometricUnlockController>,
 ) {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    private val vibrator = context.getSystemService(Context.Vibrator::class.java)
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
     private val handler = Handler(Looper.getMainLooper())
 
     private var overlayView: QuickLaunchRadialView? = null
@@ -139,7 +136,7 @@ constructor(
         val intent = pm.getLaunchIntentForPackage(pkgName) ?: return
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
-        keyguardStateController.notifyKeyguardDone(true)
+        biometricUnlockControllerProvider.get().startKeyguardFadingAway()
         context.startActivityAsUser(intent, UserHandle.CURRENT)
     }
 
