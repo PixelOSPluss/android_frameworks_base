@@ -14243,6 +14243,94 @@ public final class Settings {
          */
         public static final String IDENTITY_CHECK_NOTIFICATION_VIEW_DETAILS_CLICKED =
                 "identity_check_notification_view_details_clicked";
+
+        /**
+         * Whether to enable Sleep Mode
+         * @hide
+         */
+        public static final String SLEEP_MODE_ENABLED = "sleep_mode_enabled";
+
+        /**
+         * Indicates whether Sleep Mode turns on automatically
+         * 0 = disabled (default)
+         * 1 = from sunset to sunrise
+         * 2 = custom time
+         * 3 = from sunset till a time
+         * 4 = from a time till sunrise
+         * @hide
+         */
+        public static final String SLEEP_MODE_AUTO_MODE = "sleep_mode_auto_mode";
+
+        /**
+         * The custom time {@link SLEEP_MODE_ENABLED} should be on at
+         * Only relevant when {@link SLEEP_MODE_AUTO_MODE} is set to 2 and above
+         * 0 = Disabled (default)
+         * format: HH:mm,HH:mm (since,till)
+         * @hide
+         */
+        public static final String SLEEP_MODE_AUTO_TIME = "sleep_mode_auto_time";
+
+        /**
+         * Whether to disable Wi-Fi in Sleep Mode
+         * @hide
+         */
+        public static final String SLEEP_MODE_WIFI_TOGGLE = "sleep_mode_wifi_toggle";
+
+        /**
+         * Whether to disable Bluetooth in Sleep Mode
+         * @hide
+         */
+        public static final String SLEEP_MODE_BLUETOOTH_TOGGLE = "sleep_mode_bluetooth_toggle";
+
+        /**
+         * Whether to disable Mobile data in Sleep Mode
+         * @hide
+         */
+        public static final String SLEEP_MODE_CELLULAR_TOGGLE = "sleep_mode_cellular_toggle";
+
+        /**
+         * Whether to disable Sensors in Sleep Mode
+         * @hide
+         */
+        public static final String SLEEP_MODE_SENSORS_TOGGLE = "sleep_mode_sensors_toggle";
+
+        /**
+         * Ringer in Sleep Mode (0:OFF, 1:Vibrate, 2:DND, 3:Silent)
+         * @hide
+         */
+        public static final String SLEEP_MODE_RINGER_MODE = "sleep_mode_ringer_mode";
+
+        /**
+         * Idle Manager
+         * @hide
+         */
+        public static final String IDLE_MANAGER = "idle_manager";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_APPS = "idle_manager_apps";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_TIMEOUT = "idle_manager_timeout";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_KILL_STATS = "idle_manager_kill_stats";
+
+        /**
+         * @hide
+         */
+        public static final String IDLE_MANAGER_RESTORE_PENDING = "idle_manager_restore_pending";
+
+        /**
+         * Whether to trigger Sleep Mode when idle
+         * @hide
+         */
+        public static final String IDLE_MANAGER_SLEEP_MODE_TRIGGER = "idle_manager_sleep_mode_trigger";
     }
 
     /**
@@ -15098,94 +15186,6 @@ public final class Settings {
         @Readable
         public static final String LOCATION_BACKGROUND_THROTTLE_INTERVAL_MS =
                 "location_background_throttle_interval_ms";
-
-        /**
-         * Whether to enable Sleep Mode
-         * @hide
-         */
-        public static final String SLEEP_MODE_ENABLED = "sleep_mode_enabled";
-
-        /**
-         * Indicates whether Sleep Mode turns on automatically
-         * 0 = disabled (default)
-         * 1 = from sunset to sunrise
-         * 2 = custom time
-         * 3 = from sunset till a time
-         * 4 = from a time till sunrise
-         * @hide
-         */
-        public static final String SLEEP_MODE_AUTO_MODE = "sleep_mode_auto_mode";
-
-        /**
-         * The custom time {@link SLEEP_MODE_ENABLED} should be on at
-         * Only relevant when {@link SLEEP_MODE_AUTO_MODE} is set to 2 and above
-         * 0 = Disabled (default)
-         * format: HH:mm,HH:mm (since,till)
-         * @hide
-         */
-        public static final String SLEEP_MODE_AUTO_TIME = "sleep_mode_auto_time";
-
-        /**
-         * Whether to disable Wi-Fi in Sleep Mode
-         * @hide
-         */
-        public static final String SLEEP_MODE_WIFI_TOGGLE = "sleep_mode_wifi_toggle";
-
-        /**
-         * Whether to disable Bluetooth in Sleep Mode
-         * @hide
-         */
-        public static final String SLEEP_MODE_BLUETOOTH_TOGGLE = "sleep_mode_bluetooth_toggle";
-
-        /**
-         * Whether to disable Mobile data in Sleep Mode
-         * @hide
-         */
-        public static final String SLEEP_MODE_CELLULAR_TOGGLE = "sleep_mode_cellular_toggle";
-
-        /**
-         * Whether to disable Sensors in Sleep Mode
-         * @hide
-         */
-        public static final String SLEEP_MODE_SENSORS_TOGGLE = "sleep_mode_sensors_toggle";
-
-        /**
-         * Ringer in Sleep Mode (0:OFF, 1:Vibrate, 2:DND, 3:Silent)
-         * @hide
-         */
-        public static final String SLEEP_MODE_RINGER_MODE = "sleep_mode_ringer_mode";
-
-        /**
-         * Idle Manager
-         * @hide
-         */
-        public static final String IDLE_MANAGER = "idle_manager";
-
-        /**
-         * @hide
-         */
-        public static final String IDLE_MANAGER_APPS = "idle_manager_apps";
-
-        /**
-         * @hide
-         */
-        public static final String IDLE_MANAGER_TIMEOUT = "idle_manager_timeout";
-
-        /**
-         * @hide
-         */
-        public static final String IDLE_MANAGER_KILL_STATS = "idle_manager_kill_stats";
-
-        /**
-         * @hide
-         */
-        public static final String IDLE_MANAGER_RESTORE_PENDING = "idle_manager_restore_pending";
-
-        /**
-         * Whether to trigger Sleep Mode when idle
-         * @hide
-         */
-        public static final String IDLE_MANAGER_SLEEP_MODE_TRIGGER = "idle_manager_sleep_mode_trigger";
 
         /**
          * Most frequent location update interval in milliseconds that proximity alert is allowed

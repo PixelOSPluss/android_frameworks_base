@@ -28,9 +28,7 @@ import com.android.systemui.qs.tiles.DataSwitchTile
 import com.android.systemui.qs.tiles.HeadsUpTile
 import com.android.systemui.qs.tiles.PowerShareTile
 import com.android.systemui.qs.tiles.ReadingModeTile
-import com.android.systemui.qs.tiles.ScreenshotTile
 import com.android.systemui.qs.tiles.SleepModeTile
-import com.android.systemui.qs.tiles.SmartPixelsTile
 import com.android.systemui.qs.tiles.SyncTile
 import com.android.systemui.qs.tiles.UsbTetherTile
 import com.android.systemui.qs.tiles.VpnTile
