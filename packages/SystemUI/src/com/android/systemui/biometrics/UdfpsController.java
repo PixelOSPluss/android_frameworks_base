@@ -198,7 +198,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     @NonNull private final MSDLPlayer mMsdlPlayer;
     private final boolean mIgnoreRefreshRate;
     private final KeyguardTransitionInteractor mKeyguardTransitionInteractor;
-    @NonNull private final com.android.systemui.quicklaunch.QuickLaunchController mQuickLaunchController;
 
     // Currently the UdfpsController supports a single UDFPS sensor. If devices have multiple
     // sensors, this, in addition to a lot of the code here, will be updated.
@@ -616,7 +615,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                     tryDismissingKeyguard();
                 }
                 if (!mOnFingerDown) {
-                    mQuickLaunchController.onFingerDown(data.getX(), data.getY());
                     onFingerDown(requestId,
                             data.getPointerId(),
                             data.getX(),
@@ -646,7 +644,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
                     Log.w(TAG, "This is a CANCEL event that's reported as an UP event!");
                 }
                 mAttemptedToDismissKeyguard = false;
-                mQuickLaunchController.onFingerUp(data.getX(), data.getY());
                 onFingerUp(requestId,
                         mOverlay.getTouchOverlay(),
                         data.getPointerId(),
@@ -734,10 +731,8 @@ public class UdfpsController implements DozeReceiver, Dumpable {
             @Application CoroutineScope scope,
             UserActivityNotifier userActivityNotifier,
             Lazy<WakefulnessLifecycle> wakefulnessLifecycle,
-            MSDLPlayer msdlPlayer,
-            @NonNull com.android.systemui.quicklaunch.QuickLaunchController quickLaunchController) {
+            MSDLPlayer msdlPlayer) {
         mContext = context;
-        mQuickLaunchController = quickLaunchController;
         mExecution = execution;
         mVibrator = vibrator;
         mInflater = inflater;
