@@ -201,6 +201,7 @@ public class BiometricUnlockController extends KeyguardUpdateMonitorCallback imp
     private final VibratorHelper mVibratorHelper;
     private final BiometricUnlockInteractor mBiometricUnlockInteractor;
     private final Lazy<SecureLockDeviceInteractor> mSecureLockDeviceInteractor;
+    private final Lazy<com.android.systemui.biometrics.udfps.quicklaunch.QuickLaunchController> mQuickLaunchControllerLazy;
 
     private final BiometricUnlockLogger mLogger;
     private final SystemClock mSystemClock;
@@ -320,7 +321,8 @@ public class BiometricUnlockController extends KeyguardUpdateMonitorCallback imp
             JavaAdapter javaAdapter,
             KeyguardTransitionInteractor keyguardTransitionInteractor,
             Lazy<SecureLockDeviceInteractor> secureLockDeviceInteractor,
-            Lazy<SceneInteractor> sceneInteractorLazy
+            Lazy<SceneInteractor> sceneInteractorLazy,
+            Lazy<com.android.systemui.biometrics.udfps.quicklaunch.QuickLaunchController> quickLaunchControllerLazy
     ) {
         mPowerManager = powerManager;
         mUpdateMonitor = keyguardUpdateMonitor;
@@ -331,6 +333,7 @@ public class BiometricUnlockController extends KeyguardUpdateMonitorCallback imp
         mWakefulnessLifecycle.addObserver(mWakefulnessObserver);
         mBiometricUnlockInteractor = biometricUnlockInteractor;
         mSecureLockDeviceInteractor = secureLockDeviceInteractor;
+        mQuickLaunchControllerLazy = quickLaunchControllerLazy;
 
         mNotificationShadeWindowController = notificationShadeWindowController;
         mDozeScrimController = dozeScrimController;
@@ -361,6 +364,45 @@ public class BiometricUnlockController extends KeyguardUpdateMonitorCallback imp
                 this::consumeFromGoneTransitions);
         mSceneInteractor = sceneInteractorLazy;
         dumpManager.registerDumpable(this);
+    }
+
+    @VisibleForTesting
+    public BiometricUnlockController(
+            DozeScrimController dozeScrimController,
+            KeyguardViewMediator keyguardViewMediator,
+            NotificationShadeWindowController notificationShadeWindowController,
+            KeyguardStateController keyguardStateController,
+            @Main Handler handler,
+            KeyguardUpdateMonitor keyguardUpdateMonitor,
+            @Main Resources resources,
+            KeyguardBypassController keyguardBypassController,
+            MetricsLogger metricsLogger, DumpManager dumpManager,
+            PowerManager powerManager,
+            BiometricUnlockLogger biometricUnlockLogger,
+            NotificationMediaManager notificationMediaManager,
+            WakefulnessLifecycle wakefulnessLifecycle,
+            AuthController authController,
+            StatusBarStateController statusBarStateController,
+            SessionTracker sessionTracker,
+            LatencyTracker latencyTracker,
+            ScreenOffAnimationController screenOffAnimationController,
+            VibratorHelper vibrator,
+            SystemClock systemClock,
+            Lazy<SelectedUserInteractor> selectedUserInteractor,
+            BiometricUnlockInteractor biometricUnlockInteractor,
+            JavaAdapter javaAdapter,
+            KeyguardTransitionInteractor keyguardTransitionInteractor,
+            Lazy<SecureLockDeviceInteractor> secureLockDeviceInteractor,
+            Lazy<SceneInteractor> sceneInteractorLazy
+    ) {
+        this(dozeScrimController, keyguardViewMediator, notificationShadeWindowController,
+                keyguardStateController, handler, keyguardUpdateMonitor, resources,
+                keyguardBypassController, metricsLogger, dumpManager, powerManager,
+                biometricUnlockLogger, notificationMediaManager, wakefulnessLifecycle,
+                authController, statusBarStateController, sessionTracker, latencyTracker,
+                screenOffAnimationController, vibrator, systemClock, selectedUserInteractor,
+                biometricUnlockInteractor, javaAdapter, keyguardTransitionInteractor,
+                secureLockDeviceInteractor, sceneInteractorLazy, () -> null);
     }
 
     @VisibleForTesting
@@ -480,6 +522,14 @@ public class BiometricUnlockController extends KeyguardUpdateMonitorCallback imp
                         + "Secure Lock Device UI.");
                 return;
             } else if (unlockWithBypassAllowed) {
+                if (biometricSourceType == BiometricSourceType.FINGERPRINT
+                        && mQuickLaunchControllerLazy != null) {
+                    com.android.systemui.biometrics.udfps.quicklaunch.QuickLaunchController ql =
+                            mQuickLaunchControllerLazy.get();
+                    if (ql != null) {
+                        ql.onFingerprintAuthenticated();
+                    }
+                }
                 mKeyguardViewMediator.userActivity();
                 startWakeAndUnlock(biometricSourceType, isStrongBiometric);
             } else {
