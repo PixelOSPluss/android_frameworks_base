@@ -352,6 +352,10 @@ object BiometricViewSizeBinder {
                         R.id.auth_screen,
                         if (isBiometric) View.VISIBLE else View.GONE,
                     )
+                    nextConstraintSet.setVisibility(
+                        R.id.close_button,
+                        View.GONE,
+                    )
 
                     // Handle icon visibility
                     val showIcon = isBiometric && !currentState.hideSensorIcon

@@ -126,6 +126,7 @@ object BiometricViewBinder {
         val indicatorMessageView = view.requireViewById<TextView>(R.id.indicator)
 
         val closeButton = view.requireViewById<ImageButton>(R.id.close_button)
+        closeButton.visibility = View.GONE
 
         // Negative-side (left) buttons
         val negativeButton = view.requireViewById<Button>(R.id.button_negative)
