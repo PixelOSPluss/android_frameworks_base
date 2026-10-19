@@ -35,6 +35,7 @@ import androidx.annotation.VisibleForTesting;
 
 import com.android.keyguard.KeyguardUpdateMonitor;
 import com.android.keyguard.KeyguardUpdateMonitorCallback;
+import com.android.settingslib.fuelgauge.BatteryStatus;
 import com.android.systemui.Dumpable;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -98,7 +99,6 @@ public class DozeParameters implements
     private final SecureSettings mSecureSettings;
     private final Optional<MinModeManager> mMinModeManager;
 
-    private boolean mDozeAlwaysOn;
     private boolean mControlScreenOffAnimation;
     private boolean mIsQuickPickupEnabled;
 
@@ -115,6 +115,12 @@ public class DozeParameters implements
                 @Override
                 public void onShadeExpandedChanged(boolean expanded) {
                     updateControlScreenOff();
+                }
+
+                @Override
+                public void onRefreshBatteryInfo(BatteryStatus status) {
+                    updateControlScreenOff();
+                    dispatchAlwaysOnEvent();
                 }
 
                 @Override
@@ -173,6 +179,7 @@ public class DozeParameters implements
         tunerService.addTunable(
                 this,
                 Settings.Secure.DOZE_ALWAYS_ON,
+                Settings.Secure.DOZE_ON_CHARGE,
                 Settings.Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED);
         configurationController.addCallback(this);
         statusBarStateController.addCallback(this);
@@ -298,7 +305,8 @@ public class DozeParameters implements
      * @return {@code true} if enabled and available.
      */
     public boolean getAlwaysOn() {
-        return (mDozeAlwaysOn && !mBatteryController.isAodPowerSave()) || isMinModeActive();
+        return (mAmbientDisplayConfiguration.alwaysOnEnabled(mUserTracker.getUserId())
+                && !mBatteryController.isAodPowerSave()) || isMinModeActive();
     }
 
     /**
@@ -462,9 +470,7 @@ public class DozeParameters implements
 
     @Override
     public void onTuningChanged(String key, String newValue) {
-        mDozeAlwaysOn = mAmbientDisplayConfiguration.alwaysOnEnabled(mUserTracker.getUserId());
-
-        if (key.equals(Settings.Secure.DOZE_ALWAYS_ON)) {
+        if (key.equals(Settings.Secure.DOZE_ALWAYS_ON) || key.equals(Settings.Secure.DOZE_ON_CHARGE)) {
             updateControlScreenOff();
         }
 
