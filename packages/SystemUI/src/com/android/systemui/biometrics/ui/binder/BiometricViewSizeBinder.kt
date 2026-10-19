@@ -75,7 +75,7 @@ object BiometricViewSizeBinder {
                 1f,
                 view.resources.displayMetrics,
             )
-        val cornerRadiusPx = (pxToDp * cornerRadius).toInt()
+        val cornerRadiusPx = cornerRadius.toInt()
 
         var currentPosition: PromptPosition = PromptPosition.Bottom
         var currentView: BiometricPromptView? = null
