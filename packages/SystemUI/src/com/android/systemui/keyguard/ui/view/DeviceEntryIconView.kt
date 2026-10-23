@@ -18,6 +18,7 @@ package com.android.systemui.keyguard.ui.view
 
 import android.companion.virtualdevice.flags.Flags
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.AnimatedStateListDrawable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.util.AttributeSet
@@ -59,9 +60,15 @@ constructor(
         )
     val iconView: ImageView = ImageView(context, attrs).apply { id = R.id.device_entry_icon_fg }
     val bgView: ImageView = ImageView(context, attrs).apply { id = R.id.device_entry_icon_bg }
+    val madridRingView: ImageView =
+        ImageView(context, attrs).apply { id = R.id.device_entry_icon_madrid_ring }
     val aodFpDrawable: LottieDrawable = LottieDrawable()
     var accessibilityHintType: AccessibilityHintType = AccessibilityHintType.NONE
 
+    private val madridFingerprintEnabled =
+        context.resources.getBoolean(R.bool.config_udfpsMadridHaloRipple)
+    private var backgroundAlpha = 0f
+    private var madridFingerprintVisible = false
     private var animatedIconDrawable: AnimatedStateListDrawable = AnimatedStateListDrawable()
 
     init {
@@ -70,8 +77,9 @@ constructor(
         setupAccessibilityDelegate()
 
         // Ordering matters. From background to foreground we want:
-        //     bgView, iconView, longpressHandlingView overlay
+        //     bgView, madridRingView, iconView, longpressHandlingView overlay
         addBgImageView()
+        addMadridRingView()
         addIconImageView()
         addTouchHandlingView()
     }
@@ -264,6 +272,49 @@ constructor(
         lp.width = ViewGroup.LayoutParams.MATCH_PARENT
         bgView.layoutParams = lp
         bgView.alpha = 0f
+    }
+
+    private fun addMadridRingView() {
+        madridRingView.scaleType = ImageView.ScaleType.FIT_CENTER
+        madridRingView.visibility = View.GONE
+        addView(madridRingView)
+        val lp = madridRingView.layoutParams as LayoutParams
+        lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+        lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+        lp.gravity = Gravity.CENTER
+        madridRingView.layoutParams = lp
+    }
+
+    /** Keeps the background protection in sync while allowing the Madrid ring to hide it. */
+    fun setBackgroundAlpha(alpha: Float) {
+        backgroundAlpha = alpha
+        bgView.alpha = if (madridFingerprintVisible) 0f else alpha
+    }
+
+    /**
+     * Replaces the stock dark fingerprint background and AOSP fingerprint glyph with the Madrid
+     * outlined circle. This is a no-op on devices that have the Madrid effect disabled.
+     */
+    fun setMadridFingerprintVisible(visible: Boolean, useAodVariant: Boolean, tint: Int) {
+        if (!madridFingerprintEnabled) return
+        madridFingerprintVisible = visible
+        bgView.alpha = if (visible) 0f else backgroundAlpha
+        iconView.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+        madridRingView.visibility = if (visible) View.VISIBLE else View.GONE
+        if (visible) {
+            madridRingView.setImageResource(
+                if (useAodVariant) {
+                    R.drawable.udfps_madrid_ring_aod
+                } else {
+                    R.drawable.udfps_madrid_ring
+                }
+            )
+            madridRingView.imageTintList = ColorStateList.valueOf(tint)
+            madridRingView.contentDescription =
+                context.getString(R.string.accessibility_fingerprint_label)
+        } else {
+            madridRingView.contentDescription = null
+        }
     }
 
     fun getIconState(icon: IconType, aod: Boolean): IntArray {

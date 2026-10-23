@@ -72,6 +72,11 @@ object AlternateBouncerUdfpsViewBinder {
                         fgViewModel.padding,
                         fgViewModel.padding,
                     )
+                    view.setMadridFingerprintVisible(
+                        visible = true,
+                        useAodVariant = false,
+                        tint = fgViewModel.tint,
+                    )
                 }
             }
         }
@@ -85,7 +90,7 @@ object AlternateBouncerUdfpsViewBinder {
                     }
                 }
                 launch("$TAG#viewModel.bgAlpha") {
-                    viewModel.bgAlpha.collect { alpha -> bgView.alpha = alpha }
+                    viewModel.bgAlpha.collect { alpha -> view.setBackgroundAlpha(alpha) }
                 }
             }
         }

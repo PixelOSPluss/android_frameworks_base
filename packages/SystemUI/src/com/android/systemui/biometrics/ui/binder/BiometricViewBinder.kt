@@ -19,6 +19,7 @@ package com.android.systemui.biometrics.ui.binder
 import android.animation.Animator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
 import android.hardware.biometrics.BiometricAuthenticator
 import android.hardware.biometrics.BiometricConstants
 import android.hardware.biometrics.BiometricPrompt
@@ -176,6 +177,25 @@ object BiometricViewBinder {
         view.repeatWhenAttached {
             // these do not change and need to be set before any size transitions
             val modalities = viewModel.modalities.first()
+            val useMadridRing =
+                modalities.hasUdfps &&
+                    view.resources.getBoolean(R.bool.config_udfpsMadridHaloRipple)
+            if (useMadridRing) {
+                // The Madrid port uses its outlined ring as the resting fingerprint
+                // affordance. Keep this view for sizing/accessibility, but replace the stock
+                // Lottie glyph with the ring.
+                iconView.setImageResource(R.drawable.udfps_madrid_ring)
+                iconView.scaleType = ImageView.ScaleType.FIT_CENTER
+                iconView.imageTintList =
+                    ColorStateList.valueOf(
+                        com.android.settingslib.Utils.getColorAttrDefaultColor(
+                            view.context,
+                            android.R.attr.textColorPrimary,
+                        )
+                    )
+                iconView.contentDescription =
+                    view.context.getString(R.string.accessibility_fingerprint_label)
+            }
 
             val coexAssets = BiometricAuthIconAssets.getCoexAssetsList(hasSfps = true)
             val fingerprintAssets = BiometricAuthIconAssets.getFingerprintAssetsList(hasSfps = true)
@@ -265,7 +285,7 @@ object BiometricViewBinder {
 
             lifecycleScope.launch {
                 viewModel.hideSensorIcon.collect { showWithoutIcon ->
-                    if (!showWithoutIcon) {
+                    if (!showWithoutIcon && !useMadridRing) {
                         PromptIconViewBinder.bind(iconView, viewModel)
                     }
                 }

@@ -55,15 +55,15 @@ class UdfpsHapticsSimulator @Inject constructor(
                     udfpsController?.playStartHaptic()
                 }
                 "success" -> {
-                    // needs to be kept up to date with AcquisitionClient#SUCCESS_VIBRATION_EFFECT
+                    // Madrid 210_FingerprintUnlock_P_RTP.bin
                     vibrator.vibrate(
-                        VibrationEffect.get(VibrationEffect.EFFECT_CLICK),
+                        VibrationEffect.get(210, false /* fallback */),
                         sonificationEffects)
                 }
                 "error" -> {
-                    // needs to be kept up to date with AcquisitionClient#ERROR_VIBRATION_EFFECT
+                    // Madrid 76_UnlockFailed_P_RTP.bin
                     vibrator.vibrate(
-                        VibrationEffect.get(VibrationEffect.EFFECT_DOUBLE_CLICK),
+                        VibrationEffect.get(76, false /* fallback */),
                         sonificationEffects)
                 }
                 else -> invalidCommand(pw)
@@ -74,9 +74,9 @@ class UdfpsHapticsSimulator @Inject constructor(
     override fun help(pw: PrintWriter) {
         pw.println("Usage: adb shell cmd statusbar udfps-haptic <haptic>")
         pw.println("Available commands:")
-        pw.println("  start")
-        pw.println("  success, always plays CLICK haptic")
-        pw.println("  error, always plays DOUBLE_CLICK haptic")
+        pw.println("  start, plays the Madrid recognizing haptic (159)")
+        pw.println("  success, plays the Madrid unlock waveform (210)")
+        pw.println("  error, plays the Madrid failure waveform (76)")
     }
 
     fun invalidCommand(pw: PrintWriter) {

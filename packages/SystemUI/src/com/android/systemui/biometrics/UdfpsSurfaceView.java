@@ -21,8 +21,10 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -131,24 +133,62 @@ public class UdfpsSurfaceView extends SurfaceView implements SurfaceHolder.Callb
     }
 
     /**
-     * Immediately draws the illumination dot on this SurfaceView's surface.
+     * Immediately draws the illumination dot and pressed icon on this SurfaceView's surface.
      */
     public void drawIlluminationDot(@NonNull RectF sensorRect) {
+        drawIllumination(sensorRect, true /* drawPressedIcon */);
+    }
+
+    /**
+     * Draws only the bright illumination oval. The AOSP pressed icon is omitted so a
+     * device-specific UDFPS animation can provide the visible affordance without removing the
+     * light required by an optical fingerprint sensor.
+     */
+    public void drawIlluminationOval(@NonNull RectF sensorRect) {
+        drawIllumination(sensorRect, false /* drawPressedIcon */);
+    }
+
+    private void drawIllumination(@NonNull RectF sensorRect, boolean drawPressedIcon) {
         if (!mHasValidSurface) {
-            Log.e(TAG, "drawIlluminationDot | the surface is destroyed or was never created.");
+            Log.e(TAG, "drawIllumination | the surface is destroyed or was never created.");
             return;
         }
         Canvas canvas = null;
         try {
             canvas = mHolder.lockCanvas();
-            mUdfpsIconPressed.setBounds(
-                    Math.round(sensorRect.left),
-                    Math.round(sensorRect.top),
-                    Math.round(sensorRect.right),
-                    Math.round(sensorRect.bottom)
-            );
-            mUdfpsIconPressed.draw(canvas);
+            if (canvas == null) {
+                return;
+            }
+            if (drawPressedIcon) {
+                mUdfpsIconPressed.setBounds(
+                        Math.round(sensorRect.left),
+                        Math.round(sensorRect.top),
+                        Math.round(sensorRect.right),
+                        Math.round(sensorRect.bottom)
+                );
+                mUdfpsIconPressed.draw(canvas);
+            }
             canvas.drawOval(sensorRect, mSensorPaint);
+        } finally {
+            // Make sure the surface is never left in a bad state.
+            if (canvas != null) {
+                mHolder.unlockCanvasAndPost(canvas);
+            }
+        }
+    }
+
+    /**
+     * Clears the illumination dot from this SurfaceView's surface, leaving the surface
+     * transparent so a device-specific UDFPS animation can be the only visible effect.
+     */
+    public void clearIlluminationDot() {
+        if (!mHasValidSurface) {
+            return;
+        }
+        Canvas canvas = null;
+        try {
+            canvas = mHolder.lockCanvas();
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         } finally {
             // Make sure the surface is never left in a bad state.
             if (canvas != null) {

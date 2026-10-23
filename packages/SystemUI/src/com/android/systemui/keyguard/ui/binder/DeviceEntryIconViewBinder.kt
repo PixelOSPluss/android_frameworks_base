@@ -269,6 +269,12 @@ object DeviceEntryIconViewBinder {
                             )
                             // Invalidate, just in case the padding changes just after icon changes
                             fgIconView.invalidate()
+                            view.setMadridFingerprintVisible(
+                                visible =
+                                    viewModel.type == DeviceEntryIconView.IconType.FINGERPRINT,
+                                useAodVariant = viewModel.useAodVariant,
+                                tint = overrideColor?.toArgb() ?: viewModel.tint,
+                            )
                         }
                     }
                 }
@@ -302,7 +308,7 @@ object DeviceEntryIconViewBinder {
 
                     launch("$TAG#bgViewModel.alpha") {
                         bgViewModel.alpha.collect { alpha ->
-                            bgView.alpha = alpha
+                            view.setBackgroundAlpha(alpha)
                             if (enableLockscreenBlur()) {
                                 bgView.background?.alpha = (255 * alpha).toInt()
                             }

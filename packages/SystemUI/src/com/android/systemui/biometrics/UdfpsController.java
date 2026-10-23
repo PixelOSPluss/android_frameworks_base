@@ -22,6 +22,8 @@ import static android.hardware.biometrics.BiometricFingerprintConstants.FINGERPR
 import static android.hardware.biometrics.BiometricFingerprintConstants.FINGERPRINT_ACQUIRED_START;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_BP;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_KEYGUARD;
+import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_OTHER;
+import static android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_SETTINGS;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_ENROLL_ENROLLING;
 import static android.hardware.biometrics.BiometricRequestConstants.REASON_ENROLL_FIND_SENSOR;
 
@@ -195,6 +197,7 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     @NonNull private final MSDLPlayer mMsdlPlayer;
     private final Lazy<SceneInteractor> mSceneInteractorLazy;
     private final boolean mIgnoreRefreshRate;
+    private final boolean mUdfpsMadridHaloRipple;
     private final KeyguardTransitionInteractor mKeyguardTransitionInteractor;
 
     // Currently the UdfpsController supports a single UDFPS sensor. If devices have multiple
@@ -741,6 +744,8 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         mUserActivityNotifier = userActivityNotifier;
         mIgnoreRefreshRate = mContext.getResources()
                     .getBoolean(R.bool.config_ignoreUdfpsVote);
+        mUdfpsMadridHaloRipple = mContext.getResources()
+                    .getBoolean(com.android.systemui.res.R.bool.config_udfpsMadridHaloRipple);
         // The fingerprint manager is queried for UDFPS before this class is constructed, so the
         // fingerprint manager should never be null.
         mFingerprintManager = checkNotNull(fingerprintManager);
@@ -822,10 +827,18 @@ public class UdfpsController implements DozeReceiver, Dumpable {
     }
 
     /**
-     * If a11y touchExplorationEnabled, play haptic to signal UDFPS scanning started.
+     * Play haptic to signal UDFPS scanning started.
      */
     @VisibleForTesting
     public void playStartHaptic() {
+        if (mUdfpsMadridHaloRipple && isOptical() && mVibrator != null) {
+            // 159_fodMotionRipple_P_RTP.bin, the original Madrid recognizing haptic.
+            mVibrator.vibrate(
+                    VibrationEffect.get(159, false /* fallback */),
+                    UDFPS_VIBRATION_ATTRIBUTES
+            );
+            return;
+        }
         if (mAccessibilityManager.isTouchExplorationEnabled()) {
             if (mOverlay != null && mOverlay.getTouchOverlay() != null) {
                 mVibrator.performHapticFeedback(
@@ -913,6 +926,9 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         }
         if (udfpsView.isDisplayConfigured()) {
             udfpsView.unconfigureDisplay();
+        } else {
+            // mIgnoreRefreshRate can skip configureDisplay(), but the ripple was still started.
+            udfpsView.stopMadridRipple();
         }
     }
 
@@ -1041,6 +1057,18 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         return mSensorProps.sensorType == FingerprintSensorProperties.TYPE_UDFPS_OPTICAL;
     }
 
+    /** Whether the current overlay request is an authentication request. */
+    private boolean isAuthRequest() {
+        if (mOverlay == null) {
+            return false;
+        }
+        final int reason = mOverlay.getRequestReason();
+        return reason == REASON_AUTH_BP
+                || reason == REASON_AUTH_KEYGUARD
+                || reason == REASON_AUTH_OTHER
+                || reason == REASON_AUTH_SETTINGS;
+    }
+
     private boolean isUltrasonic() {
         return mSensorProps.sensorType == FingerprintSensorProperties.TYPE_UDFPS_ULTRASONIC;
     }
@@ -1120,6 +1148,13 @@ public class UdfpsController implements DozeReceiver, Dumpable {
 
         final View view = mOverlay.getTouchOverlay();
         if (isOptical() && view instanceof UdfpsTouchOverlay udfpsView) {
+            final boolean authRequest = isAuthRequest();
+            if (authRequest) {
+                udfpsView.startMadridRipple();
+            }
+            // The Madrid halo/ripple is the desired visual for auth. Suppress only the AOSP
+            // pressed icon; the bright illumination oval must stay for the optical sensor.
+            udfpsView.setSuppressIlluminationDot(authRequest && mUdfpsMadridHaloRipple);
             if (mIgnoreRefreshRate) {
                 dispatchOnUiReady(requestId);
             } else {

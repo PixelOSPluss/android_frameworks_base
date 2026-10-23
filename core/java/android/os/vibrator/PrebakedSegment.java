@@ -225,6 +225,12 @@ public final class PrebakedSegment extends VibrationEffectSegment {
             case EFFECT_TICK:
                 break;
             default:
+                // Vendor prebaked waveform IDs used by the Madrid UDFPS port:
+                // 159 = fodMotionRipple, 210 = FingerprintUnlock, 76 = UnlockFailed.
+                // Keep this allowlist narrow so unrelated out-of-range IDs are still rejected.
+                if (mEffectId == 76 || mEffectId == 159 || mEffectId == 210) {
+                    break;
+                }
                 int[] ringtones = VibrationEffect.RINGTONES;
                 if (mEffectId < ringtones[0] || mEffectId > ringtones[ringtones.length - 1]) {
                     throw new IllegalArgumentException(

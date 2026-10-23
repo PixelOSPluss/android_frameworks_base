@@ -22,6 +22,7 @@ import android.util.AttributeSet
 import android.view.Surface
 import android.widget.FrameLayout
 import com.android.systemui.biometrics.UdfpsDisplayModeProvider
+import com.android.systemui.biometrics.UdfpsMadridRippleView
 import com.android.systemui.biometrics.UdfpsSurfaceView
 import com.android.systemui.res.R
 
@@ -31,11 +32,17 @@ import com.android.systemui.res.R
  */
 class UdfpsTouchOverlay(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
     private var ghbmView: UdfpsSurfaceView? = null
+    private var madridRippleView: UdfpsMadridRippleView? = null
     private var udfpsDisplayMode: UdfpsDisplayModeProvider? = null
+    private var suppressIlluminationDot = false
 
-    // sensorRect may be bigger than the sensor. True sensor dimensions are defined in
-    // overlayParams.sensorBounds
+    // UdfpsControllerOverlay sets this to UdfpsOverlayParams.sensorBounds, i.e. the true sensor
+    // bounds for the current resolution.
     var sensorRect = Rect()
+        set(value) {
+            field = value
+            madridRippleView?.setSensorBounds(value)
+        }
 
     /** True after the call to [configureDisplay] and before the call to [unconfigureDisplay]. */
     var isDisplayConfigured: Boolean = false
@@ -43,14 +50,41 @@ class UdfpsTouchOverlay(context: Context, attrs: AttributeSet?) : FrameLayout(co
 
     override fun onFinishInflate() {
         ghbmView = findViewById(R.id.hbm_view)
+        madridRippleView = findViewById(R.id.madrid_ripple_view)
     }
 
     fun setUdfpsDisplayModeProvider(udfpsDisplayModeProvider: UdfpsDisplayModeProvider?) {
         udfpsDisplayMode = udfpsDisplayModeProvider
     }
 
+    fun startMadridRipple() {
+        madridRippleView?.setSensorBounds(sensorRect)
+        madridRippleView?.startRipple()
+    }
+
+    fun stopMadridRipple() {
+        madridRippleView?.stopRipple()
+    }
+
+    /**
+     * Suppresses the AOSP fingerprint icon. The bright illumination oval is intentionally kept:
+     * optical sensors need this light while authenticating. The Madrid halo/ripple is drawn above
+     * it in the layout and remains the visible affordance.
+     */
+    fun setSuppressIlluminationDot(suppress: Boolean) {
+        suppressIlluminationDot = suppress
+        if (isDisplayConfigured) {
+            if (suppress) {
+                ghbmView?.drawIlluminationOval(RectF(sensorRect))
+            } else {
+                ghbmView?.drawIlluminationDot(RectF(sensorRect))
+            }
+        }
+    }
+
     fun configureDisplay(onDisplayConfigured: Runnable) {
         isDisplayConfigured = true
+
         val gView = ghbmView
         if (gView != null) {
             gView.setGhbmIlluminationListener(this::doIlluminate)
@@ -64,12 +98,17 @@ class UdfpsTouchOverlay(context: Context, attrs: AttributeSet?) : FrameLayout(co
     private fun doIlluminate(surface: Surface?, onDisplayConfigured: Runnable?) {
         udfpsDisplayMode?.enable {
             onDisplayConfigured?.run()
-            ghbmView?.drawIlluminationDot(RectF(sensorRect))
+            if (suppressIlluminationDot) {
+                ghbmView?.drawIlluminationOval(RectF(sensorRect))
+            } else {
+                ghbmView?.drawIlluminationDot(RectF(sensorRect))
+            }
         }
     }
 
     fun unconfigureDisplay() {
         isDisplayConfigured = false
+        stopMadridRipple()
         ghbmView?.let { view ->
             view.setGhbmIlluminationListener(null)
             view.visibility = INVISIBLE

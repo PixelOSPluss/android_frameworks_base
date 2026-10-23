@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2026 The Android Open Source Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!--
+      Device-gated port of the Xiaomi Madrid style-E UDFPS halo/ripple.
+      Enabled by the device resource overlay for optical UDFPS devices.
+    -->
+    <bool name="config_udfpsMadridHaloRipple">false</bool>
+
+    <!--
+      MiuiGxzwUtils.gxzw_halo_res_circle_radius. MiuiGxzwHightlightContainer uses this
+      dimension to scale the 452x452 halo image to the current sensor size.
+    -->
+    <dimen name="udfps_madrid_halo_res_circle_radius">69.099976dp</dimen>
+</resources>

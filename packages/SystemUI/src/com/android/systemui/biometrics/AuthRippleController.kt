@@ -194,6 +194,11 @@ constructor(
     }
 
     private fun showDwellRipple() {
+        if (sysuiContext.resources.getBoolean(R.bool.config_udfpsMadridHaloRipple)) {
+            // The Madrid port replaces the AOSP dwell ripple with the original 24-frame
+            // halo/ripple animation. Keep the AOSP behavior on all other devices.
+            return
+        }
         updateSensorLocation()
         fingerprintSensorLocation?.let {
             mView.setFingerprintSensorLocation(it, udfpsRadius)

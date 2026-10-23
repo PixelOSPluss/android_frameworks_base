@@ -23,4 +23,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible"/>
+    <com.android.systemui.biometrics.UdfpsMadridRippleView
+        android:id="@+id/madrid_ripple_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"/>
 </com.android.systemui.biometrics.ui.view.UdfpsTouchOverlay>

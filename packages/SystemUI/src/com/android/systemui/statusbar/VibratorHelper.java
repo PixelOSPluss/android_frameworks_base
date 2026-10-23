@@ -18,16 +18,21 @@ package com.android.systemui.statusbar;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.content.Context;
 import android.media.AudioAttributes;
 import android.os.Process;
 import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 
 import androidx.annotation.VisibleForTesting;
 
 import com.android.systemui.dagger.SysUISingleton;
+import com.android.systemui.dagger.qualifiers.Application;
+import com.android.systemui.res.R;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +49,10 @@ import javax.inject.Inject;
 @SysUISingleton
 public class VibratorHelper {
 
+    private static final String TAG = "VibratorHelper";
+
     private final Vibrator mVibrator;
+    private final boolean mUseMadridBiometricHaptics;
     public static final VibrationAttributes TOUCH_VIBRATION_ATTRIBUTES =
             VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH);
 
@@ -63,8 +71,9 @@ public class VibratorHelper {
      * Creates a vibrator helper on a new single threaded {@link Executor}.
      */
     @Inject
-    public VibratorHelper(@Nullable Vibrator vibrator) {
-        this(vibrator, Executors.newSingleThreadExecutor());
+    public VibratorHelper(@Nullable Vibrator vibrator, @Application Context context) {
+        this(vibrator, Executors.newSingleThreadExecutor(),
+                context.getResources().getBoolean(R.bool.config_udfpsMadridHaloRipple));
     }
 
     /**
@@ -72,8 +81,38 @@ public class VibratorHelper {
      */
     @VisibleForTesting
     public VibratorHelper(@Nullable Vibrator vibrator, Executor executor) {
+        this(vibrator, executor, false /* useMadridBiometricHaptics */);
+    }
+
+    private VibratorHelper(@Nullable Vibrator vibrator, Executor executor,
+            boolean useMadridBiometricHaptics) {
         mExecutor = executor;
         mVibrator = vibrator;
+        mUseMadridBiometricHaptics = useMadridBiometricHaptics;
+    }
+
+    private VibrationEffect getBiometricSuccessEffect() {
+        if (mUseMadridBiometricHaptics) {
+            try {
+                // 210_FingerprintUnlock_P_RTP.bin, played by the Madrid direct-RTP HAL.
+                return VibrationEffect.get(210, false /* fallback */);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Madrid biometric success effect 210 is unavailable", e);
+            }
+        }
+        return BIOMETRIC_SUCCESS_VIBRATION_EFFECT;
+    }
+
+    private VibrationEffect getBiometricErrorEffect() {
+        if (mUseMadridBiometricHaptics) {
+            try {
+                // 76_UnlockFailed_P_RTP.bin, played by the Madrid direct-RTP HAL.
+                return VibrationEffect.get(76, false /* fallback */);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "Madrid biometric error effect 76 is unavailable", e);
+            }
+        }
+        return BIOMETRIC_ERROR_VIBRATION_EFFECT;
     }
 
     /**
@@ -160,7 +199,7 @@ public class VibratorHelper {
     public void vibrateAuthSuccess(String reason) {
         vibrate(Process.myUid(),
                 "com.android.systemui",
-                BIOMETRIC_SUCCESS_VIBRATION_EFFECT, reason,
+                getBiometricSuccessEffect(), reason,
                 COMMUNICATION_REQUEST_VIBRATION_ATTRIBUTES);
     }
 
@@ -169,7 +208,7 @@ public class VibratorHelper {
      */
     public void vibrateAuthError(String reason) {
         vibrate(Process.myUid(), "com.android.systemui",
-                BIOMETRIC_ERROR_VIBRATION_EFFECT, reason,
+                getBiometricErrorEffect(), reason,
                 COMMUNICATION_REQUEST_VIBRATION_ATTRIBUTES);
     }
 
@@ -185,6 +224,9 @@ public class VibratorHelper {
      * @see View#performHapticFeedback(int feedbackConstant, int flags)
      */
     public void performHapticFeedback(@NonNull View view, int feedbackConstant, int flags) {
+        if (playMadridBiometricHaptic(feedbackConstant)) {
+            return;
+        }
         view.performHapticFeedback(feedbackConstant, flags);
     }
 
@@ -193,6 +235,24 @@ public class VibratorHelper {
      * @see View#performHapticFeedback(int feedbackConstant)
      */
     public void performHapticFeedback(@NonNull View view, int feedbackConstant) {
+        if (playMadridBiometricHaptic(feedbackConstant)) {
+            return;
+        }
         view.performHapticFeedback(feedbackConstant);
+    }
+
+    private boolean playMadridBiometricHaptic(int feedbackConstant) {
+        if (!mUseMadridBiometricHaptics) {
+            return false;
+        }
+        if (feedbackConstant == HapticFeedbackConstants.BIOMETRIC_CONFIRM) {
+            vibrate(getBiometricSuccessEffect(), HARDWARE_FEEDBACK_VIBRATION_ATTRIBUTES);
+            return true;
+        }
+        if (feedbackConstant == HapticFeedbackConstants.BIOMETRIC_REJECT) {
+            vibrate(getBiometricErrorEffect(), HARDWARE_FEEDBACK_VIBRATION_ATTRIBUTES);
+            return true;
+        }
+        return false;
     }
 }
