@@ -64,6 +64,13 @@ final class PerformPrebakedVibratorStep extends AbstractComposedVibratorStep {
             }
 
             int stepId = conductor.nextVibratorCallbackStepId(getVibratorId());
+            final int percent = conductor.vibrationSettings.getGlobalIntensityPercent();
+            if (percent <= 0) {
+                return skipStep();
+            }
+            if (percent < 100) {
+                vibrator.setAmplitude(percent / 100f);
+            }
             long vibratorOnResult = vibrator.on(getVibration().id, stepId, prebaked);
             handleVibratorOnResult(vibratorOnResult);
             getVibration().stats.reportPerformEffect(vibratorOnResult, prebaked);

@@ -5652,6 +5652,16 @@ public final class Settings {
         public static final String VIBRATE_INPUT_DEVICES = "vibrate_input_devices";
 
         /**
+         * The strength of all vibrations, as a percentage.
+         *
+         * <b>Values:</b> 0 - 100, where 0 disables all vibrations and 100 is full strength.
+         * Defaults to 100 when unset.
+         * @hide
+         */
+        public static final String VIBRATION_INTENSITY_PERCENT =
+                "vibration_intensity_percent";
+
+        /**
          * The intensity of alarm vibrations, if configurable.
          *
          * Not all devices are capable of changing their vibration intensity; on these devices

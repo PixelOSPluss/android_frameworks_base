@@ -4590,6 +4590,11 @@
     <!-- Indicating if keyboard vibration intensity settings are supported or not. Only valid if config_keyboardVibrationSettingsSupported is true. -->
     <bool name="config_keyboardVibrationSettingsIntensitySupported">false</bool>
 
+    <!-- Whether vibration strength is controlled by a single global 0-100 percentage instead of
+         discrete per-usage intensity levels. When enabled, per-usage settings are treated as
+         on/off and the global percentage scales every vibration. -->
+    <bool name="config_vibrationIntensityPercentEnabled">false</bool>
+
     <!-- Indicating if ringtone vibration settings supported or not. -->
     <bool name="config_ringtoneVibrationSettingsSupported">false</bool>
 

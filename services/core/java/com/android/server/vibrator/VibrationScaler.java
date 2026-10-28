@@ -65,6 +65,10 @@ final class VibrationScaler {
      * @return one of ExternalVibrationScale.ScaleLevel.SCALE_*
      */
     public int getScaleLevel(int usageHint) {
+        if (mVibrationConfig.isIntensityPercentEnabled()) {
+            // Per-usage levels do not control strength in percent mode.
+            return SCALE_NONE;
+        }
         int defaultIntensity = mVibrationSettings.getDefaultIntensity(usageHint);
         int currentIntensity = mVibrationSettings.getCurrentIntensity(usageHint);
         if (currentIntensity == Vibrator.VIBRATION_INTENSITY_OFF) {
@@ -92,6 +96,10 @@ final class VibrationScaler {
      * @return The scale factor.
      */
     public float getScaleFactor(int usageHint, boolean isExternalVibration) {
+        if (mVibrationConfig.isIntensityPercentEnabled()) {
+            // Per-usage levels are neutral; the global percent is applied separately.
+            return SCALE_FACTOR_NONE;
+        }
         int currentIntensity = mVibrationSettings.getCurrentIntensity(usageHint);
         if (currentIntensity == Vibrator.VIBRATION_INTENSITY_OFF) {
             // Bypassing user settings, or it has changed between checking and scaling. Use default.
@@ -136,8 +144,14 @@ final class VibrationScaler {
         return effect.resolve(mVibrationConfig.getDefaultVibrationAmplitude())
                 .applyEffectStrength(newEffectStrength)
                 .scale(scaleFactor)
+                .scale(getGlobalIntensityScale())
                 // Make sure this is the last one so it is applied on top of the settings scaling.
                 .applyAdaptiveScale(adaptiveScale);
+    }
+
+    /** The scale factor derived from the global vibration strength percentage. */
+    float getGlobalIntensityScale() {
+        return mVibrationSettings.getGlobalIntensityPercent() / 100f;
     }
 
     /**
@@ -180,6 +194,7 @@ final class VibrationScaler {
     void dump(IndentingPrintWriter pw) {
         pw.println("VibrationScaler:");
         pw.increaseIndent();
+        pw.println("globalIntensityScale = " + getGlobalIntensityScale());
 
         pw.println("ScaleLevels:");
         pw.increaseIndent();
@@ -265,6 +280,11 @@ final class VibrationScaler {
     }
 
     private int getEffectStrength(int usageHint) {
+        if (mVibrationConfig.isIntensityPercentEnabled()) {
+            // Prebaked effects always use the strongest table; the global percent is applied
+            // separately as an amplitude.
+            return VibrationEffect.EFFECT_STRENGTH_STRONG;
+        }
         int currentIntensity = mVibrationSettings.getCurrentIntensity(usageHint);
         if (currentIntensity == Vibrator.VIBRATION_INTENSITY_OFF) {
             // Bypassing user settings, or it has changed between checking and scaling. Use default.

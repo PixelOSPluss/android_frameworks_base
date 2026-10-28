@@ -171,8 +171,14 @@ final class ExternalVibrationSession extends Vibration
     }
 
     void scale(VibrationScaler scaler, int usage) {
+        float globalScale = scaler.getGlobalIntensityScale();
+        if (globalScale <= 0) {
+            muteScale();
+            return;
+        }
         mScale.scaleLevel = scaler.getScaleLevel(usage);
-        mScale.scaleFactor = scaler.getScaleFactor(usage, /* isExternalVibration= */ true);
+        mScale.scaleFactor = scaler.getScaleFactor(usage, /* isExternalVibration= */ true)
+                * globalScale;
         mScale.adaptiveHapticsScale = scaler.getAdaptiveHapticsScale(usage);
         stats.reportAdaptiveScale(mScale.adaptiveHapticsScale);
     }

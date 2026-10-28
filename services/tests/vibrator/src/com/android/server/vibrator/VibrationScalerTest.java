@@ -548,6 +548,50 @@ public class VibrationScalerTest {
         assertEquals(scaled.getAdaptiveScale(), 1.0f);
     }
 
+    @Test
+    public void scale_intensityPercentEnabled_scalesAmplitudeByPercent() {
+        mConfigBuilder.setIntensityPercentEnabled(true);
+        VibrationScaler scaler = createSystemReadyScaler();
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 50);
+
+        StepSegment scaled = getFirstSegment(scaler.scale(
+                VibrationEffect.createOneShot(100, 128), USAGE_TOUCH));
+
+        assertEquals(128f / 255f / 2f, scaled.getAmplitude(), TOLERANCE);
+        assertEquals(0.5f, scaler.getGlobalIntensityScale(), TOLERANCE);
+    }
+
+    @Test
+    public void scale_intensityPercentEnabled_ignoresPerUsageIntensity() {
+        mConfigBuilder.setIntensityPercentEnabled(true);
+        mConfigBuilder.setDefaultHapticFeedbackIntensity(VIBRATION_INTENSITY_MEDIUM);
+        VibrationScaler scaler = createSystemReadyScaler();
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 100);
+
+        setUserSetting(Settings.System.HAPTIC_FEEDBACK_INTENSITY, VIBRATION_INTENSITY_LOW);
+        StepSegment low = getFirstSegment(scaler.scale(
+                VibrationEffect.createOneShot(100, 128), USAGE_TOUCH));
+        PrebakedSegment prebaked = new PrebakedSegment(VibrationEffect.EFFECT_CLICK,
+                /* shouldFallback= */ false, VibrationEffect.EFFECT_STRENGTH_LIGHT);
+        assertEquals(1f, scaler.getScaleFactor(USAGE_TOUCH, false), TOLERANCE);
+        assertEquals(VibrationEffect.EFFECT_STRENGTH_STRONG,
+                scaler.scale(prebaked, USAGE_TOUCH).getEffectStrength());
+
+        setUserSetting(Settings.System.HAPTIC_FEEDBACK_INTENSITY, VIBRATION_INTENSITY_HIGH);
+        StepSegment high = getFirstSegment(scaler.scale(
+                VibrationEffect.createOneShot(100, 128), USAGE_TOUCH));
+        assertEquals(1f, scaler.getScaleFactor(USAGE_TOUCH, false), TOLERANCE);
+        assertEquals(low.getAmplitude(), high.getAmplitude(), TOLERANCE);
+    }
+
+    @Test
+    public void getGlobalIntensityScale_percentDisabled_ignoresPercentSetting() {
+        VibrationScaler scaler = createSystemReadyScaler();
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 0);
+
+        assertEquals(1f, scaler.getGlobalIntensityScale(), TOLERANCE);
+    }
+
     private VibrationScaler createSystemReadyScaler() {
         mVibrationSettings = new VibrationSettings(
                 mContextSpy, new Handler(mTestLooper.getLooper()), mConfigBuilder.build());

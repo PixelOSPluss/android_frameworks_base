@@ -198,6 +198,8 @@ final class VibrationSettings {
     @GuardedBy("mLock")
     private boolean mVibrateOn;
     @GuardedBy("mLock")
+    private int mGlobalIntensityPercent = 100;
+    @GuardedBy("mLock")
     private int mRingerMode;
     @GuardedBy("mLock")
     private boolean mOnWirelessCharger;
@@ -291,6 +293,8 @@ final class VibrationSettings {
                 Settings.System.getUriFor(Settings.System.KEYBOARD_VIBRATION_ENABLED));
         registerSettingsObserver(
                 Settings.System.getUriFor(Settings.System.KEYBOARD_VIBRATION_INTENSITY));
+        registerSettingsObserver(
+                Settings.System.getUriFor(Settings.System.VIBRATION_INTENSITY_PERCENT));
 
         if (mVibrationConfig.ignoreVibrationsOnWirelessCharger()) {
             Intent batteryStatus = mContext.registerReceiver(
@@ -361,6 +365,34 @@ final class VibrationSettings {
     }
 
     /**
+     * Whether vibration strength is controlled by a single global percentage instead of discrete
+     * per-usage intensity levels.
+     */
+    public boolean isIntensityPercentEnabled() {
+        return mVibrationConfig.isIntensityPercentEnabled();
+    }
+
+    /**
+     * Return the global vibration strength in percent, from 0 to 100.
+     *
+     * <p>Returns 100 when the percent model is disabled, so callers can treat the value as a
+     * neutral scale factor.
+     */
+    public int getGlobalIntensityPercent() {
+        if (!mVibrationConfig.isIntensityPercentEnabled()) {
+            return 100;
+        }
+        synchronized (mLock) {
+            return mGlobalIntensityPercent;
+        }
+    }
+
+    /** Return the device default vibration amplitude, from 0 to 255. */
+    public int getDefaultVibrationAmplitude() {
+        return mVibrationConfig.getDefaultVibrationAmplitude();
+    }
+
+    /**
      * Returns the duration, in milliseconds, that the vibrator control service will wait for new
      * vibration params.
      * @return The request vibration params timeout in milliseconds.
@@ -410,6 +442,11 @@ final class VibrationSettings {
     public Status shouldIgnoreVibration(@NonNull CallerInfo callerInfo) {
         final int usage = callerInfo.attrs.getUsage();
         synchronized (mLock) {
+            if (mVibrationConfig.isIntensityPercentEnabled() && mGlobalIntensityPercent <= 0) {
+                // Zero strength mutes everything, including bypassed accessibility effects.
+                return Status.IGNORED_FOR_SETTINGS;
+            }
+
             if (!mUidObserver.isUidForeground(callerInfo.uid)
                     && !BACKGROUND_PROCESS_USAGE_ALLOWLIST.contains(usage)) {
                 return Status.IGNORED_BACKGROUND;
@@ -535,6 +572,8 @@ final class VibrationSettings {
             mVibrateInputDevices =
                     loadSystemSetting(Settings.System.VIBRATE_INPUT_DEVICES, 0, userHandle) > 0;
             mVibrateOn = loadSystemSetting(Settings.System.VIBRATE_ON, 1, userHandle) > 0;
+            mGlobalIntensityPercent = Math.max(0, Math.min(100, loadSystemSetting(
+                    Settings.System.VIBRATION_INTENSITY_PERCENT, 100, userHandle)));
 
             boolean isKeyboardVibrationOn =
                     loadSystemSetting(Settings.System.KEYBOARD_VIBRATION_ENABLED, 1, userHandle)
@@ -649,6 +688,7 @@ final class VibrationSettings {
             return "VibrationSettings{"
                     + "mVibratorConfig=" + mVibrationConfig
                     + ", mVibrateOn=" + mVibrateOn
+                    + ", mGlobalIntensityPercent=" + mGlobalIntensityPercent
                     + ", mVibrateInputDevices=" + mVibrateInputDevices
                     + ", mBatterySaverMode=" + mBatterySaverMode
                     + ", mRingerMode=" + ringerModeToString(mRingerMode)
@@ -665,6 +705,8 @@ final class VibrationSettings {
             pw.println("VibrationSettings:");
             pw.increaseIndent();
             pw.println("vibrateOn = " + mVibrateOn);
+            pw.println("intensityPercentEnabled = " + mVibrationConfig.isIntensityPercentEnabled());
+            pw.println("intensityPercent = " + mGlobalIntensityPercent);
             pw.println("vibrateInputDevices = " + mVibrateInputDevices);
             pw.println("batterySaverMode = " + mBatterySaverMode);
             pw.println("ringerMode = " + ringerModeToString(mRingerMode));

@@ -51,7 +51,9 @@ public class PrebakedFallbackAdapterTest {
             EFFECT_CLICK, EFFECT_TICK);
 
     private final SparseArray<VibrationEffect> mFallbackEffects = new SparseArray<>();
-    private PrebakedFallbackAdapter mAdapter = new PrebakedFallbackAdapter(mFallbackEffects);
+    private int mIntensityPercent = 100;
+    private PrebakedFallbackAdapter mAdapter = new PrebakedFallbackAdapter(mFallbackEffects,
+            /* defaultAmplitude= */ 255, () -> mIntensityPercent);
 
     @Rule public final SetFlagsRule mSetFlagsRule = new SetFlagsRule();
 
@@ -264,6 +266,21 @@ public class PrebakedFallbackAdapterTest {
         assertEquals(prebakedStartTime, segments.get(1).getStartTimeMillis());
         // The second fallback segment should have -1
         assertEquals(-1, segments.get(2).getStartTimeMillis());
+    }
+
+    @Test
+    @EnableFlags(Flags.FLAG_REMOVE_HIDL_SUPPORT)
+    public void testPrebakedUnsupportedWithFallback_scalesFallbackByIntensityPercent() {
+        mIntensityPercent = 50;
+        mFallbackEffects.put(EFFECT_THUD, VibrationEffect.createOneShot(10, DEFAULT_AMPLITUDE));
+        List<VibrationEffectSegment> segments = new ArrayList<>(Arrays.asList(
+                new PrebakedSegment(EFFECT_THUD, true, VibrationEffect.EFFECT_STRENGTH_MEDIUM)));
+
+        mAdapter.adaptToVibrator(BASIC_VIBRATOR_INFO, segments, -1);
+
+        assertEquals(1, segments.size());
+        // The fallback is resolved from DEFAULT_AMPLITUDE before being scaled.
+        assertEquals(0.5f, ((StepSegment) segments.get(0)).getAmplitude(), 0f);
     }
 
     private static VibratorInfo createVibratorInfoWithEffects(int... ids) {

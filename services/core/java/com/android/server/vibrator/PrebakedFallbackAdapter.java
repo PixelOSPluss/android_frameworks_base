@@ -29,15 +29,21 @@ import android.util.SparseArray;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 /** Adapter that replaces unsupported {@link PrebakedSegment} with fallback. */
 final class PrebakedFallbackAdapter implements VibrationSegmentsAdapter {
     private static final String TAG = "PrebakedFallbackAdapter";
 
     private final SparseArray<VibrationEffect> mFallbackEffects;
+    private final int mDefaultAmplitude;
+    private final IntSupplier mIntensityPercentSupplier;
 
-    PrebakedFallbackAdapter(SparseArray<VibrationEffect> fallbackEffects) {
+    PrebakedFallbackAdapter(SparseArray<VibrationEffect> fallbackEffects, int defaultAmplitude,
+            IntSupplier intensityPercentSupplier) {
         mFallbackEffects = fallbackEffects;
+        mDefaultAmplitude = defaultAmplitude;
+        mIntensityPercentSupplier = intensityPercentSupplier;
     }
 
     @Override
@@ -58,8 +64,20 @@ final class PrebakedFallbackAdapter implements VibrationSegmentsAdapter {
             if (!(mFallbackEffects.get(effectId) instanceof VibrationEffect.Composed fallback)) {
                 continue;
             }
+            // Fallbacks are raw resources, so apply the global strength here. Resolving first
+            // replaces DEFAULT_AMPLITUDE, which scale() would otherwise ignore.
+            VibrationEffect.Composed fallbackToPlay = fallback;
+            int percent = mIntensityPercentSupplier.getAsInt();
+            if (percent < 100) {
+                VibrationEffect scaled = fallback.resolve(mDefaultAmplitude)
+                        .scale(percent / 100f);
+                if (scaled instanceof VibrationEffect.Composed composed) {
+                    fallbackToPlay = composed;
+                }
+            }
             long startTimeMillis = prebaked.getStartTimeMillis();
-            List<VibrationEffectSegment> fallbackSegments = new ArrayList<>(fallback.getSegments());
+            List<VibrationEffectSegment> fallbackSegments =
+                    new ArrayList<>(fallbackToPlay.getSegments());
             if (startTimeMillis >= 0 && !fallbackSegments.isEmpty()) {
                 for (int j = 0; j < fallbackSegments.size(); j++) {
                     VibrationEffectSegment segment = fallbackSegments.get(j);

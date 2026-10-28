@@ -491,6 +491,66 @@ public class VibrationSettingsTest {
     }
 
     @Test
+    public void getGlobalIntensityPercent_percentEnabled_returnsClampedSetting() {
+        mVibrationConfigBuilder.setIntensityPercentEnabled(true);
+        createSystemReadyVibrationSettings();
+        assertTrue(mVibrationSettings.isIntensityPercentEnabled());
+
+        // Defaults to 100 when the setting is unset.
+        assertEquals(100, mVibrationSettings.getGlobalIntensityPercent());
+
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 50);
+        assertEquals(50, mVibrationSettings.getGlobalIntensityPercent());
+
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, -10);
+        assertEquals(0, mVibrationSettings.getGlobalIntensityPercent());
+
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 150);
+        assertEquals(100, mVibrationSettings.getGlobalIntensityPercent());
+    }
+
+    @Test
+    public void getGlobalIntensityPercent_percentDisabled_returns100() {
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 25);
+        assertFalse(mVibrationSettings.isIntensityPercentEnabled());
+        assertEquals(100, mVibrationSettings.getGlobalIntensityPercent());
+    }
+
+    @Test
+    public void shouldIgnoreVibration_intensityPercentZero_ignoresEveryUsageIncludingBypass() {
+        mVibrationConfigBuilder.setIntensityPercentEnabled(true);
+        createSystemReadyVibrationSettings();
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 0);
+
+        for (int usage : ALL_USAGES) {
+            assertVibrationIgnoredForUsage(usage, Status.IGNORED_FOR_SETTINGS);
+            assertVibrationIgnoredForUsageAndFlags(usage,
+                    VibrationAttributes.FLAG_BYPASS_USER_VIBRATION_INTENSITY_OFF,
+                    Status.IGNORED_FOR_SETTINGS);
+        }
+    }
+
+    @Test
+    public void shouldIgnoreVibration_intensityPercentNonZero_allowsAnyUsage() {
+        mVibrationConfigBuilder.setIntensityPercentEnabled(true);
+        createSystemReadyVibrationSettings();
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 1);
+
+        for (int usage : ALL_USAGES) {
+            assertVibrationNotIgnoredForUsage(usage);
+        }
+    }
+
+    @Test
+    public void shouldIgnoreVibration_intensityPercentZeroWithPercentDisabled_allowsAnyUsage() {
+        setUserSetting(Settings.System.VIBRATION_INTENSITY_PERCENT, 0);
+
+        for (int usage : ALL_USAGES) {
+            assertVibrationNotIgnoredForUsage(usage);
+        }
+    }
+
+    @Test
     public void shouldIgnoreVibration_withRingSettingsOff_allowsAllVibrations() {
         // VIBRATE_WHEN_RINGING is deprecated and should have no effect on the ring vibration
         // setting. The ramping ringer is also independent now, instead of a 3-state setting.
@@ -955,6 +1015,13 @@ public class VibrationSettingsTest {
                 VibrationAttributes.createForUsage(usage), NON_SYSTEM_UID, deviceId, null, null);
         assertEquals(errorMessageForUsage(usage), expectedStatus,
                 mVibrationSettings.shouldIgnoreVibration(callerInfo));
+    }
+
+    private void assertVibrationIgnoredForUsageAndFlags(@VibrationAttributes.Usage int usage,
+            @VibrationAttributes.Flag int flags, Status expectedStatus) {
+        assertVibrationIgnoredForAttributes(
+                new VibrationAttributes.Builder().setUsage(usage).setFlags(flags).build(),
+                expectedStatus);
     }
 
     private void assertVibrationIgnoredForAttributes(VibrationAttributes attrs,

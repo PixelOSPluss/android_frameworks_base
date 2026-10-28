@@ -56,7 +56,9 @@ final class DeviceAdapter implements CombinedVibration.VibratorAdapter {
     DeviceAdapter(VibrationSettings settings, SparseArray<HalVibrator> vibrators) {
         mSegmentAdapters = Arrays.asList(
                 // Replace unsupported prebaked effects with fallback
-                new PrebakedFallbackAdapter(settings.getFallbackEffects()),
+                new PrebakedFallbackAdapter(settings.getFallbackEffects(),
+                        settings.getDefaultVibrationAmplitude(),
+                        settings::getGlobalIntensityPercent),
                 // Updates primitive delays to hardware supported pauses
                 new PrimitiveDelayAdapter(),
                 // Add extra ramp down segments as needed
